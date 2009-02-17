@@ -1,0 +1,62 @@
+MASTER_SITES =	http://xanadu.nichol.ca/pub/OpenBSD/
+
+_DISTFILES_SRC = \
+	${OSREV}/src.tar.gz \
+	${OSREV}/sys.tar.gz \
+	${OSREV}/XF4.tar.gz
+
+KERNELCONFS =	kernels/${OSREV}/GENERIC.MPRAID \
+		kernels/${OSREV}/GENERIC.RAID
+
+# The i386 platform needs the tcl and tk packages to be installed to build X
+# source: http://www.openbsd.org/cgi-bin/cvsweb/~checkout~/www/faq/faq5.html?rev=1.155&content-type=text/html#Xbld
+#
+.if ${MACHINE} == "i386"
+post-configure:
+	@cd ${.CURDIR} && exec ${MAKE} pre-chroot
+	@${CHROOT_ENV} pkg_add \
+		ftp://ftp.openbsd.org/pub/OpenBSD/${OSREV}/packages/i386/tk-8.4.7p1.tgz
+	@cd ${.CURDIR} && exec ${MAKE} post-chroot
+.endif
+
+001_mbuf:
+	${m-kernel}
+
+002_splnet:
+	${m-kernel}
+
+003_spamd:
+	cd /usr/src/libexec/spamd && (${m-std})
+
+# patching in XF4 is in a slightly different directory, so override the default
+_xorg-patch:
+	@${_MAKE_COOKIE} ${_PRE_PATCH_COOKIE}
+	@cd ${WRKDIST}/usr/src/XF4 && ${PATCH_CMD} -p0 < ${PATCHFILE}
+
+004_xorg-do-patch: _xorg-patch
+
+004_xorg:
+	cd /usr/src/XF4 && (${m-build})
+
+005_route6:
+	${m-kernel}
+
+007_kroute:
+	cd /usr/src/usr.sbin/ospfd && (${m-std})
+	cd /usr/src/usr.sbin/ripd && (${m-std})
+
+008_xorg-do-patch: _xorg-patch
+
+008_xorg:
+	cd /usr/src/XF4 && (${m-build})
+
+009_file:
+	cd /usr/src/usr.bin/file && (${m-std})
+
+010_dhcpd:
+	cd /usr/src/usr.sbin/dhcpd && (${m-std})
+
+011_openssl:
+	cd /usr/src/lib/libssl && (${m-std})
+
+include bsd.obpf.mk

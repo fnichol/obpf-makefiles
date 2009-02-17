@@ -1,0 +1,62 @@
+MASTER_SITES =	http://install.its.talonline.ca/pub/OpenBSD/
+MASTER_SITES0 =	http://install.its.talonline.ca/pub/OpenBSD/
+
+KERNELCONFS =	kernels/${OSREV}/GENERIC.MPRAID:0 \
+		kernels/${OSREV}/GENERIC.RAID:0
+
+# list of all kernels to be built for patches
+KERNELS = GENERIC GENERIC.RAID GENERIC.MP GENERIC.MPRAID
+
+
+# patching xencara is in a different directory root, so override the default
+_xorg-patch:
+	@${_MAKE_COOKIE} ${_PRE_PATCH_COOKIE}
+	@cd ${WRKDIST}/usr/src/xenocara && ${PATCH_CMD} -p0 < ${PATCHFILE}
+
+
+001_dhcpd:
+	cd /usr/src/usr.sbin/dhcpd && (${m-std})
+
+002_openssl:
+	cd /usr/src/lib/libssl && (${m-std})
+
+003_cdboot-do-patch:
+	@${_MAKE_COOKIE} ${_PRE_PATCH_COOKIE}
+
+003_cdboot:
+
+003_cdboot-do-plist:
+	@${ECHO} "" > ${_PLIST_COOKIE}
+
+003_cdboot-do-fake:
+
+003_cdboot-do-package:
+	@${MKDIR} -p ${PACKAGE_REPOSITORY}
+	${TOUCH} ${_PACKAGE}
+
+004_pf:
+	${m-kernel}
+
+005_ifrtlabel:
+	${m-kernel}
+
+006_xorg-do-patch: _xorg-patch
+
+006_xorg:
+	cd /usr/src/xenocara && \
+	(${m} bootstrap && ${m-obj} && ${m-build})
+
+007_tcprespond:
+	${m-kernel}
+
+008_ip6rthdr:
+	${m-kernel}
+
+009_ppp:
+	cd /usr/src/usr.sbin/ppp && \
+	(${m-clean} && ${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+010_openssh:
+	cd /usr/src/usr.bin/ssh && (${m-std})
+
+include bsd.obpf.mk

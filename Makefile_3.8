@@ -1,0 +1,100 @@
+MASTER_SITES =	ftp://ftp3.usa.openbsd.org/pub/OpenBSD/
+MASTER_SITES0 =	http://paradigm.nichol.ca/pub/OpenBSD/ \
+		http://xanadu.nichol.ca/pub/OpenBSD/
+
+_DISTFILES_SRC = \
+	${OSREV}/src.tar.gz \
+	${OSREV}/sys.tar.gz \
+	${OSREV}/XF4.tar.gz
+
+KERNELCONFS =	kernels/${OSREV}/GENERIC.MPRAID:0 \
+		kernels/${OSREV}/GENERIC.RAID:0
+
+# The i386 platform needs the tcl and tk packages to be installed to build X
+# source: http://www.openbsd.org/cgi-bin/cvsweb/~checkout~/www/faq/faq5.html?rev=1.155&content-type=text/html#Xbld
+#
+.if ${MACHINE} == "i386"
+post-configure:
+	@cd ${.CURDIR} && exec ${MAKE} pre-chroot
+	@${CHROOT_ENV} pkg_add \
+		ftp://ftp3.usa.openbsd.org/pub/OpenBSD/${OSREV}/packages/i386/tk-8.4.7.tgz
+	@cd ${.CURDIR} && exec ${MAKE} post-chroot
+.endif
+
+# patching in XF4 is in a slightly different directory, so override the default
+_xorg-patch:
+	@${_MAKE_COOKIE} ${_PRE_PATCH_COOKIE}
+	@cd ${WRKDIST}/usr/src/XF4 && ${PATCH_CMD} -p0 < ${PATCHFILE}
+
+001_perl:
+	cd /usr/src/gnu/usr.bin/perl && \
+	(${m-obj-wrp} && ${m-depend-wrp} && ${m-wrp} && ${m-install-wrp})
+
+002_fd:
+	cd /usr/src/usr.sbin/authpf && (${m-obj} && ${m} && ${m-install})
+
+003_i386pmap:
+	${m-kernel}
+
+004_i386machdep:
+	${m-kernel}
+
+005_ssh:
+	cd /usr/src/usr.bin/ssh && (${m-obj} && ${m} && ${m-install})
+
+006_sendmail:
+	cd /usr/src/gnu/usr.sbin/sendmail && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+007_xorg-do-patch: _xorg-patch
+
+007_xorg:
+	cd /usr/src/XF4 && (${m-build})
+
+008_sendmail2:
+	cd /usr/src/gnu/usr.sbin/sendmail && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+009_httpd:
+	cd /usr/src/usr.sbin/httpd && (${m-std-wrp})
+
+010_sendmail3:
+	cd /usr/src/gnu/usr.sbin/sendmail && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+011_dhcpd:
+	cd /usr/src/usr.sbin/dhcpd && (${m-obj} && ${m} && ${m-install})
+
+012_sem:
+	${m-kernel}
+
+013_isakmpd:
+	cd /usr/src/sbin/isakmpd && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+014_sppp:
+	${m-kernel}
+
+015_bind:
+	cd /usr/src/usr.sbin/bind && \
+	(${m-obj-wrp} && ${m-wrp} && ${m-install-wrp})
+
+016_openssl:
+	cd /usr/src/lib/libssl && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+017_httpd2:
+	cd /usr/src/usr.sbin/httpd && (${m-std-wrp})
+
+018_openssl2:
+	cd /usr/src/lib/libssl && \
+	(${m-obj} && ${m-depend} && ${m-includes} && ${m} && ${m-install})
+
+019_systrace:
+	${m-kernel}
+
+020_ssh2:
+	cd /usr/src/usr.bin/ssh && \
+	(${m-obj} && ${m-cleandir} && ${m} && ${m-install})
+
+include bsd.obpf.mk

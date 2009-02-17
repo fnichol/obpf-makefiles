@@ -1,0 +1,106 @@
+MASTER_SITES =	ftp://ftp3.usa.openbsd.org/pub/OpenBSD/
+MASTER_SITES0 =	http://paradigm.nichol.ca/pub/OpenBSD/
+
+_DISTFILES_SRC = \
+	${OSREV}/src.tar.gz \
+	${OSREV}/sys.tar.gz \
+	${OSREV}/XF4.tar.gz
+
+KERNELCONFS =	kernels/${OSREV}/GENERIC.MPRAID:0 \
+		kernels/${OSREV}/GENERIC.RAID:0
+
+# The i386 platform needs the tcl and tk packages to be installed to build X
+# source: http://www.openbsd.org/cgi-bin/cvsweb/~checkout~/www/faq/faq5.html?rev=1.155&content-type=text/html#Xbld
+#
+.if ${MACHINE} == "i386"
+post-configure:
+	@cd ${.CURDIR} && exec ${MAKE} pre-chroot
+	@${CHROOT_ENV} pkg_add \
+		ftp://ftp3.usa.openbsd.org/pub/OpenBSD/${OSREV}/packages/i386/tk-8.4.7.tgz
+	@cd ${.CURDIR} && exec ${MAKE} post-chroot
+.endif
+
+# patching in XF4 is in a slightly different directory, so override the default
+_xorg-patch:
+	@${_MAKE_COOKIE} ${_PRE_PATCH_COOKIE}
+	@cd ${WRKDIST}/usr/src/XF4 && ${PATCH_CMD} -p0 < ${PATCHFILE}
+
+001_sendmail:
+	cd /usr/src/gnu/usr.sbin/sendmail && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+002_xorg-do-patch: _xorg-patch
+
+002_xorg:
+	cd /usr/src/XF4 && (${m-build})
+
+003_sendmail2:
+	cd /usr/src/gnu/usr.sbin/sendmail && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+004_httpd:
+	cd /usr/src/usr.sbin/httpd && (${m-std-wrp})
+
+005_sendmail3:
+	cd /usr/src/gnu/usr.sbin/sendmail && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+	
+006_dhcpd:
+	cd /usr/src/usr.sbin/dhcpd && (${m-obj} && ${m} && ${m-install})
+
+007_sem:
+	${m-kernel}
+
+008_isakmpd:
+	cd /usr/src/sbin/isakmpd && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+009_sppp:
+	${m-kernel}
+
+010_bind:
+	cd /usr/src/usr.sbin/bind && \
+	(${m-obj-wrp} && ${m-wrp} && ${m-install-wrp})
+
+011_openssl:
+	cd /usr/src/lib/libssl && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
+
+012_httpd2:
+	cd /usr/src/usr.sbin/httpd && (${m-std-wrp})
+
+013_openssl2:
+	cd /usr/src/lib/libssl && \
+	(${m-obj} && ${m-depend} && ${m-includes} && ${m} && ${m-install})
+
+014_systrace:
+	${m-kernel}
+
+015_ssh:
+	cd /usr/src/usr.bin/ssh && \
+	(${m-obj} && ${m-cleandir} && ${m} && ${m-install})
+
+016_ldso:
+	cd /usr/src/libexec/ld.so && (${m-std})
+
+017_agp:
+	${m-kernel}
+
+018_icmp6:
+	${m-kernel}
+
+019_timezone:
+	cd /usr/src/share/zoneinfo && (${m-obj} && ${m} && ${m-install})
+
+020_m_dup1:
+	${m-kernel}
+
+021_xorg-do-patch: _xorg-patch
+
+021_xorg:
+	cd /usr/src/XF4 && (${m-build})
+
+022_route6:
+	${m-kernel}
+
+include bsd.obpf.mk
