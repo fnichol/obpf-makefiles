@@ -1,0 +1,3 @@
+syntax: regexp
+^bsd\.obpf\.mk$
+^Makefile$
