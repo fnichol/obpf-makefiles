@@ -1,8 +1,18 @@
-MASTER_SITES =	http://install.its.talonline.ca/pub/OpenBSD/
-MASTER_SITES0 =	http://install.its.talonline.ca/pub/OpenBSD/
+001_bind:
+	cd /usr/src/usr.sbin/bind && \
+	(${m-obj-wrp} && ${m-depend-wrp} && ${m-wrp} && ${m-install-wrp})
 
-# list of all kernels to be built for patches
-KERNELS = GENERIC
+002_xmm:
+	${m-kernel}
+
+003_getsockopt:
+	${m-kernel}
+
+004_openssl:
+	cd /usr/src/lib/libssl && \
+	(${m-obj} && ${m-depend} && ${m-includes} && ${m} && ${m-install})
+	cd /usr/src/sbin && \
+	(${m-obj} && ${m-depend} && ${m} && ${m-install})
 
 
 include bsd.obpf.mk

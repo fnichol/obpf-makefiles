@@ -1,3 +1,6 @@
 syntax: regexp
 ^bsd\.obpf\.mk$
 ^Makefile$
+^distfiles/
+^packages/
+^w-openbsd-.\../
